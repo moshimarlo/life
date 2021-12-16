@@ -93,9 +93,8 @@ impl State {
                         }
                     }
                 }
-                if self.board[coords] == 1 {
-                    count -= 1;
-                }
+                // if cell is alive, decrement count.
+                count -= self.board[coords];
                 match self.board[coords] {
                     1 => {
                         self.board_next[coords] = 1;
