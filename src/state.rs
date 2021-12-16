@@ -17,6 +17,7 @@ pub struct State {
     meshes_dead: Vec<Mesh>,
     rects: Vec<Rect>,
     paused: bool,
+    iterations: i64,
 }
 
 impl State {
@@ -28,6 +29,7 @@ impl State {
             meshes_dead: vec![],
             rects: vec![],
             paused: true,
+            iterations: 0,
         };
         let mut rng = rand::thread_rng();
         let w = GRID_SIZE.0 as i32;
@@ -115,6 +117,7 @@ impl State {
 
     fn update_state(&mut self) {
         let w = GRID_SIZE.0 as i32;
+        self.iterations += 1;
         for i in 0..GRID_SIZE.0 {
             for j in 0..GRID_SIZE.1 {
                 let coords = (j as i32 * w + i as i32) as usize;
@@ -126,6 +129,7 @@ impl State {
     fn randomize(&mut self) {
         let mut rng = rand::thread_rng();
         let w = GRID_SIZE.0 as i32;
+        self.iterations = 0;
         for i in 0..GRID_SIZE.0 as i32 {
             for j in 0..GRID_SIZE.1 as i32 {
                 let alive = rng.gen::<bool>() as u8;
@@ -137,6 +141,7 @@ impl State {
 }
 
 impl EventHandler<GameError> for State {
+    #[inline]
     fn update(&mut self, ctx: &mut Context) -> GameResult {
         while timer::check_update_time(ctx, DESIRED_FPS) {
             if !self.paused {
@@ -147,6 +152,7 @@ impl EventHandler<GameError> for State {
         Ok(())
     }
 
+    #[inline]
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         graphics::clear(ctx, [1.0, 1.0, 1.0, 1.0].into());
         let w = GRID_SIZE.0 as i32;
@@ -176,6 +182,7 @@ impl EventHandler<GameError> for State {
         Ok(())
     }
 
+    #[inline]
     fn key_down_event(
         &mut self,
         _ctx: &mut Context,
@@ -184,13 +191,24 @@ impl EventHandler<GameError> for State {
         _repeat: bool,
     ) {
         match keycode {
-            KeyCode::Space => { self.paused = !self.paused; },
+            KeyCode::Space => {
+                self.paused = match self.paused {
+                    true => {
+                        false
+                    },
+                    false => {
+                        println!("Iterations: {}", self.iterations);
+                        true
+                    },
+                };
+            },
             KeyCode::Escape => { ggez::event::quit(_ctx); },
             KeyCode::Key5 => { self.randomize(); },
             _ => {},
         }
     }
 
+    #[inline]
     fn mouse_button_down_event(
         &mut self,
         _ctx: &mut Context,
