@@ -11,7 +11,7 @@ use ggez::{
 use rand::Rng;
 
 const GRID_SIZE: (usize, usize) = (60, 60);
-const GRID_CELL_SIZE: (u32, u32) = (4, 4);
+const GRID_CELL_SIZE: (u32, u32) = (18, 18);
 
 const SCREEN_SIZE: (f32, f32) = (
     GRID_SIZE.0 as f32 * GRID_CELL_SIZE.0 as f32,
@@ -41,15 +41,10 @@ impl Cell {
     }
 
     pub fn draw(&self, ctx: &mut Context) -> GameResult<()> {
-        let color: Color;
-        match self.alive {
-            true => {
-                color = [0.0, 0.0, 0.0, 1.0].into();
-            },
-            false => {
-                color = [1.0, 1.0, 1.0, 1.0].into();
-            },
-        }
+        let color: Color = match self.alive {
+            true => ggez::graphics::Color::BLACK,
+            false => ggez::graphics::Color::WHITE,
+        };
         let tile = Mesh::new_rectangle(
             ctx,
             DrawMode::fill(),
@@ -95,6 +90,8 @@ impl State {
     } 
 
     fn check_neighbours(&mut self) {
+        let w = GRID_SIZE.0 as i32;
+        let h = GRID_SIZE.1 as i32;
         for i in 0..GRID_SIZE.0 {
             for j in 0..GRID_SIZE.1 {
                 // let count = self.board[mod_floor(i as i32 - 1, GRID_SIZE.0)][j].alive as u8
@@ -109,30 +106,40 @@ impl State {
                 // println!("count: {}", count);
                 // assert!(count >= 0 && count <= 8);
                 let mut count = 0;
-                if i > 0 {
-                    if self.board[i-1][j].alive { count += 1 }
-                    if j > 0 {
-                        if self.board[i-1][j-1].alive { count += 1 }
-                    }
-                    if j < GRID_SIZE.1 - 1{
-                        if self.board[i-1][j+1].alive { count += 1 }
+                for x in i as i32 - 1..i as i32 + 2 {
+                    for y in j as i32 - 1..j as i32 + 2 {
+                        if self.board[((x + w) % w) as usize][((y + h) % h) as usize].alive {
+                            count += 1;
+                        }
                     }
                 }
-                if i < GRID_SIZE.0 - 1{
-                    if self.board[i+1][j].alive { count += 1 }
-                    if j < GRID_SIZE.1 - 1{
-                        if self.board[i+1][j+1].alive { count += 1 }
-                    }
-                    if j > 0 {
-                        if self.board[i+1][j-1].alive { count += 1 }
-                    }
+                if self.board[i][j].alive {
+                    count -= 1;
                 }
-                if j < GRID_SIZE.1 - 1{
-                    if self.board[i][j+1].alive { count += 1 }
-                }
-                if j > 0 {
-                    if self.board[i][j-1].alive { count += 1 }
-                }
+                // if i > 0 {
+                //     if self.board[i-1][j].alive { count += 1 }
+                //     if j > 0 {
+                //         if self.board[i-1][j-1].alive { count += 1 }
+                //     }
+                //     if j < GRID_SIZE.1 - 1{
+                //         if self.board[i-1][j+1].alive { count += 1 }
+                //     }
+                // }
+                // if i < GRID_SIZE.0 - 1{
+                //     if self.board[i+1][j].alive { count += 1 }
+                //     if j < GRID_SIZE.1 - 1{
+                //         if self.board[i+1][j+1].alive { count += 1 }
+                //     }
+                //     if j > 0 {
+                //         if self.board[i+1][j-1].alive { count += 1 }
+                //     }
+                // }
+                // if j < GRID_SIZE.1 - 1{
+                //     if self.board[i][j+1].alive { count += 1 }
+                // }
+                // if j > 0 {
+                //     if self.board[i][j-1].alive { count += 1 }
+                // }
                 match self.board[i][j].alive {
                     true => {
                         self.board[i][j].alive_next = true;
