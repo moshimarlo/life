@@ -3,30 +3,30 @@ use ggez::{
     ContextBuilder,
     event::{self, EventHandler, KeyCode, KeyMods, MouseButton},
     error::{GameError, GameResult},
-    conf::{self, Conf},
+    conf,
     timer,
     graphics::{self, Color, Mesh, DrawMode, Rect},
     mint,
 };
 use rand::Rng;
 
-const GRID_SIZE: (usize, usize) = (60, 60);
-const GRID_CELL_SIZE: (u32, u32) = (18, 18);
+const GRID_SIZE: (usize, usize) = (100, 100);
+const GRID_CELL_SIZE: (u32, u32) = (12, 12);
 
 const SCREEN_SIZE: (f32, f32) = (
     GRID_SIZE.0 as f32 * GRID_CELL_SIZE.0 as f32,
     GRID_SIZE.1 as f32 * GRID_CELL_SIZE.1 as f32,
 );
 
-const DESIRED_FPS: u32 = 16;
+const DESIRED_FPS: u32 = 60;
 
 #[derive(Copy, Clone)]
 struct Cell {
     x: u32,
     y: u32,
-    n: i32,
     alive: bool,
     alive_next: bool,
+    rect: Rect,
 }
 
 impl Cell {
@@ -34,9 +34,14 @@ impl Cell {
         Self {
             x: 0,
             y: 0,
-            n: 0,
             alive: false,
             alive_next: false,
+            rect: Rect::new(
+                0. as f32 * GRID_CELL_SIZE.0 as f32,
+                0. as f32 * GRID_CELL_SIZE.1 as f32,
+                GRID_CELL_SIZE.0 as f32,
+                GRID_CELL_SIZE.1 as f32
+            ),
         }
     }
 
@@ -48,12 +53,7 @@ impl Cell {
         let tile = Mesh::new_rectangle(
             ctx,
             DrawMode::fill(),
-            Rect::new(
-                self.x as f32 * GRID_CELL_SIZE.0 as f32,
-                self.y as f32 * GRID_CELL_SIZE.1 as f32,
-                GRID_CELL_SIZE.0 as f32,
-                GRID_CELL_SIZE.1 as f32
-            ),
+            self.rect,
             color
         )?;
         graphics::draw(ctx, &tile, (mint::Point2 {x: self.x as f32, y: self.y as f32},))
@@ -80,6 +80,12 @@ impl State {
                 let alive = rng.gen::<bool>();
                 s.board[i][j].alive = alive;
                 s.board[i][j].alive_next = alive;
+                s.board[i][j].rect = Rect::new(
+                s.board[i][j].x as f32 * GRID_CELL_SIZE.0 as f32,
+                s.board[i][j].y as f32 * GRID_CELL_SIZE.1 as f32,
+                GRID_CELL_SIZE.0 as f32,
+                GRID_CELL_SIZE.1 as f32
+                );
             }
         }
         s
@@ -94,17 +100,6 @@ impl State {
         let h = GRID_SIZE.1 as i32;
         for i in 0..GRID_SIZE.0 {
             for j in 0..GRID_SIZE.1 {
-                // let count = self.board[mod_floor(i as i32 - 1, GRID_SIZE.0)][j].alive as u8
-                //     + self.board[mod_floor(i as i32 - 1, GRID_SIZE.0)][mod_floor(j as i32 - 1, GRID_SIZE.1)].alive as u8
-                //     + self.board[mod_floor(i as i32 - 1, GRID_SIZE.0)][mod_floor(j as i32 + 1, GRID_SIZE.1)].alive as u8
-                //     + self.board[mod_floor(i as i32 - 1, GRID_SIZE.0)][j].alive as u8
-                //     + self.board[mod_floor(i as i32 + 1, GRID_SIZE.0)][mod_floor(j as i32 + 1, GRID_SIZE.1)].alive as u8
-                //     + self.board[mod_floor(i as i32 + 1, GRID_SIZE.0)][mod_floor(j as i32 - 1, GRID_SIZE.1)].alive as u8
-                //     + self.board[i][mod_floor(j as i32 + 1, GRID_SIZE.1)].alive as u8
-                //     + self.board[i][mod_floor(j as i32 - 1, GRID_SIZE.1)].alive as u8
-                // ;
-                // println!("count: {}", count);
-                // assert!(count >= 0 && count <= 8);
                 let mut count = 0;
                 for x in i as i32 - 1..i as i32 + 2 {
                     for y in j as i32 - 1..j as i32 + 2 {
@@ -116,30 +111,6 @@ impl State {
                 if self.board[i][j].alive {
                     count -= 1;
                 }
-                // if i > 0 {
-                //     if self.board[i-1][j].alive { count += 1 }
-                //     if j > 0 {
-                //         if self.board[i-1][j-1].alive { count += 1 }
-                //     }
-                //     if j < GRID_SIZE.1 - 1{
-                //         if self.board[i-1][j+1].alive { count += 1 }
-                //     }
-                // }
-                // if i < GRID_SIZE.0 - 1{
-                //     if self.board[i+1][j].alive { count += 1 }
-                //     if j < GRID_SIZE.1 - 1{
-                //         if self.board[i+1][j+1].alive { count += 1 }
-                //     }
-                //     if j > 0 {
-                //         if self.board[i+1][j-1].alive { count += 1 }
-                //     }
-                // }
-                // if j < GRID_SIZE.1 - 1{
-                //     if self.board[i][j+1].alive { count += 1 }
-                // }
-                // if j > 0 {
-                //     if self.board[i][j-1].alive { count += 1 }
-                // }
                 match self.board[i][j].alive {
                     true => {
                         self.board[i][j].alive_next = true;
@@ -236,7 +207,6 @@ impl EventHandler<GameError> for State {
 
 fn main() {
     let state = State::new();
-    let c = Conf::new();
     let (ctx, event_loop) = ContextBuilder::new("life", "Mikko")
         .window_setup(conf::WindowSetup::default().title("Conway's Game of Life"))
         .window_mode(conf::WindowMode::default().dimensions(SCREEN_SIZE.0, SCREEN_SIZE.1))
