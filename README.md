@@ -1,5 +1,5 @@
 # What is it?
-A Rust implementation of Conway's Game of Life using the [ggez game library](ggez.rs).
+A Rust implementation of Conway's Game of Life using the [ggez game library](https://ggez.rs).
 
 # How do I run it?
 ```
