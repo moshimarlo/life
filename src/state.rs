@@ -137,6 +137,17 @@ impl State {
             }
         }
     }
+
+    fn clear_grid(&mut self) {
+        let w = GRID_SIZE.0 as i32;
+        self.iterations = 0;
+        self.paused = true;
+        for i in 0..GRID_SIZE.0 as i32 {
+            for j in 0..GRID_SIZE.1 as i32 {
+                self.board[(j * w + i) as usize] = 0;
+            }
+        }
+    }
 }
 
 impl EventHandler<GameError> for State {
@@ -202,7 +213,8 @@ impl EventHandler<GameError> for State {
                 };
             },
             KeyCode::Escape => { ggez::event::quit(_ctx); },
-            KeyCode::Key5 => { self.randomize(); },
+            KeyCode::R => { self.randomize(); },
+            KeyCode::C => { self.clear_grid(); },
             _ => {},
         }
     }
